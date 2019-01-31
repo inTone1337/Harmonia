@@ -26,7 +26,7 @@ public class SoundCloudTrackAdapter extends RecyclerView.Adapter<SoundCloudTrack
     @NonNull
     @Override
     public TrackViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.track_entry, parent, false);
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_track, parent, false);
         return new TrackViewHolder(itemView);
     }
 
@@ -43,7 +43,7 @@ public class SoundCloudTrackAdapter extends RecyclerView.Adapter<SoundCloudTrack
     }
 
     //TODO: fix crappy timestamp code
-    private String secondsToMMSS(String duration) {
+    public String secondsToMMSS(String duration) {
         int durationAsInt = Integer.parseInt(duration);
         int minutes = durationAsInt / 60000;
         int seconds = (durationAsInt - minutes * 60000) / 1000;

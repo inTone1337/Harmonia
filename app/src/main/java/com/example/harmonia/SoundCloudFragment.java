@@ -1,5 +1,8 @@
 package com.example.harmonia;
 
+import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -8,7 +11,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -16,6 +21,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
@@ -53,6 +59,14 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
     private Sensor mAccelerometer;
     private ShakeDetector mShakeDetector;
     private Target artworkPlaceholderTarget;
+    private MutableLiveData<Track> currentTrack;
+    private CurrentTrackViewModel currentTrackViewModel;
+    private ImageView currentTrackArtworkImageView;
+    private TextView currentTrackTitleTextView;
+    private TextView currentTrackPlatformTextView;
+    private TextView currentTrackStatusTextView;
+    private TextView currentTrackDateAddedTextView;
+    private CardView currentTrackCardView;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -63,6 +77,13 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        currentTrackArtworkImageView = getView().findViewById(R.id.artworkImageView);
+        currentTrackTitleTextView = getView().findViewById(R.id.titleTextView);
+        currentTrackPlatformTextView = getView().findViewById(R.id.platformTextView);
+        currentTrackStatusTextView = getView().findViewById(R.id.statusTextView);
+        currentTrackDateAddedTextView = getView().findViewById(R.id.dateAddedTextView);
+        currentTrackCardView = getView().findViewById(R.id.currentTrackCardView);
 
         getSoundCloudFavorites(harmoniaUserCredentials.getSoundCloudUserId());
 
@@ -81,6 +102,22 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
                  * device has been shook.
                  */
                 handleShakeEvent(count);
+            }
+        });
+
+        currentTrackViewModel = ViewModelProviders.of(this).get(CurrentTrackViewModel.class);
+        currentTrack = currentTrackViewModel.getCurrentTrack();
+
+        currentTrack.observe(this, new Observer<Track>() {
+            @Override
+            public void onChanged(@Nullable Track track) {
+                Picasso.get().load(track.artwork_url.replace("large", "t300x300"))
+                        .into(currentTrackArtworkImageView);
+                currentTrackTitleTextView.setText(track.title);
+                currentTrackDateAddedTextView.setText(track.favoritings_count);
+                currentTrackStatusTextView.setText(soundCloudTrackAdapter.secondsToMMSS(track.duration));
+                currentTrackPlatformTextView.setText(track.user.username);
+                currentTrackCardView.setVisibility(View.VISIBLE);
             }
         });
     }
@@ -131,6 +168,7 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
     }
 
     private void playSoundCloud(int position) {
+        Track selectedTrack = soundCloudFavoriteTracks.get(position);
         if (simpleExoPlayer != null && playerView != null) {
             simpleExoPlayer.stop();
         } else {
@@ -159,7 +197,7 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
                 public void onPrepareLoad(Drawable placeHolderDrawable) {
                 }
             };
-            Picasso.get().load(soundCloudFavoriteTracks.get(position).artwork_url.replace("large", "t300x300")).into(artworkPlaceholderTarget);
+            Picasso.get().load(selectedTrack.artwork_url.replace("large", "t300x300")).into(artworkPlaceholderTarget);
         }
 
         // Produces DataSource instances through which media data is loaded.
@@ -169,6 +207,7 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
         // Prepare the player with the source.
         simpleExoPlayer.prepare(audioSource);
         simpleExoPlayer.setPlayWhenReady(true);
+        currentTrackViewModel.getCurrentTrack().setValue(selectedTrack);
     }
 
     private void populateTracklist() {
@@ -190,6 +229,8 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
         if (simpleExoPlayer != null) {
             simpleExoPlayer.release();
         }
-        Picasso.get().cancelRequest(artworkPlaceholderTarget);
+        if (artworkPlaceholderTarget != null) {
+            Picasso.get().cancelRequest(artworkPlaceholderTarget);
+        }
     }
 }

@@ -27,7 +27,7 @@ public class SpotifyTrackAdapter extends RecyclerView.Adapter<SpotifyTrackAdapte
     @NonNull
     @Override
     public TrackViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.track_entry, parent, false);
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_track, parent, false);
         return new TrackViewHolder(itemView);
     }
 
