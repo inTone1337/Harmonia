@@ -23,10 +23,13 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.source.ConcatenatingMediaSource;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
-import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
@@ -84,6 +87,7 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
         currentTrackStatusTextView = getView().findViewById(R.id.statusTextView);
         currentTrackDateAddedTextView = getView().findViewById(R.id.dateAddedTextView);
         currentTrackCardView = getView().findViewById(R.id.currentTrackCardView);
+        currentTrackCardView.getBackground().setAlpha(128);
 
         getSoundCloudFavorites(harmoniaUserCredentials.getSoundCloudUserId());
 
@@ -137,8 +141,12 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
 
     private void handleShakeEvent(int count) {
         int randomTrackId = new Random().nextInt(soundCloudFavoriteTracks.size());
-        Log.d("randomId", String.valueOf(randomTrackId));
         playSoundCloud(randomTrackId);
+        if (!simpleExoPlayer.getShuffleModeEnabled()) {
+            simpleExoPlayer.setShuffleModeEnabled(true);
+        } else {
+            simpleExoPlayer.setShuffleModeEnabled(false);
+        }
     }
 
     private void getSoundCloudFavorites(String soundCloudUserId) {
@@ -168,46 +176,51 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
     }
 
     private void playSoundCloud(int position) {
-        Track selectedTrack = soundCloudFavoriteTracks.get(position);
-        if (simpleExoPlayer != null && playerView != null) {
-            simpleExoPlayer.stop();
-        } else {
+        if (simpleExoPlayer == null && playerView == null) {
             simpleExoPlayer = ExoPlayerFactory.newSimpleInstance(getContext());
             playerView = getView().findViewById(R.id.playerView);
             playerView.setPlayer(simpleExoPlayer);
             playerView.setControllerShowTimeoutMs(0);
             playerView.setUseArtwork(true);
+            simpleExoPlayer.addListener(new ExoPlayer.EventListener() {
+                @Override
+                public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+                    int newPosition = simpleExoPlayer.getCurrentWindowIndex();
+                    if (soundCloudTrackRecyclerView.getLayoutManager().findViewByPosition(newPosition) != null) {
+                        ImageView view = Objects.requireNonNull(Objects.requireNonNull(soundCloudTrackRecyclerView.getLayoutManager()).findViewByPosition(newPosition)).findViewById(R.id.artworkImageView);
+                        playerView.setDefaultArtwork(((BitmapDrawable) view.getDrawable()).getBitmap());
+                    } else {
+                        artworkPlaceholderTarget = new Target() {
+                            @Override
+                            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                                playerView.setDefaultArtwork(bitmap);
+                            }
+
+                            @Override
+                            public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+                            }
+
+                            @Override
+                            public void onPrepareLoad(Drawable placeHolderDrawable) {
+                            }
+                        };
+                        Picasso.get().load(soundCloudFavoriteTracks.get(newPosition).artwork_url.replace("large", "t300x300")).into(artworkPlaceholderTarget);
+                    }
+                    currentTrackViewModel.getCurrentTrack().setValue(soundCloudFavoriteTracks.get(newPosition));
+                }
+            });
+            // Produces DataSource instances through which media data is loaded.
+            DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(getContext(), Util.getUserAgent(getContext(), "Harmonia"));
+            // This is the MediaSource representing the media to be played.
+            ConcatenatingMediaSource exoPlayerPlaylist = new ConcatenatingMediaSource();
+            for (Track track : soundCloudFavoriteTracks) {
+                exoPlayerPlaylist.addMediaSource(new ExtractorMediaSource.Factory(dataSourceFactory).createMediaSource(Uri.parse(track.stream_url + "?client_id=" + SOUNDCLOUD_CLIENT_ID)));
+            }
+            // Prepare the player with the source.
+            simpleExoPlayer.prepare(exoPlayerPlaylist);
         }
-
-        if (soundCloudTrackRecyclerView.getLayoutManager().findViewByPosition(position) != null) {
-            ImageView view = Objects.requireNonNull(Objects.requireNonNull(soundCloudTrackRecyclerView.getLayoutManager()).findViewByPosition(position)).findViewById(R.id.artworkImageView);
-            playerView.setDefaultArtwork(((BitmapDrawable) view.getDrawable()).getBitmap());
-        } else {
-            artworkPlaceholderTarget = new Target() {
-                @Override
-                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                    playerView.setDefaultArtwork(bitmap);
-                }
-
-                @Override
-                public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                }
-
-                @Override
-                public void onPrepareLoad(Drawable placeHolderDrawable) {
-                }
-            };
-            Picasso.get().load(selectedTrack.artwork_url.replace("large", "t300x300")).into(artworkPlaceholderTarget);
-        }
-
-        // Produces DataSource instances through which media data is loaded.
-        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(getContext(), Util.getUserAgent(getContext(), "Harmonia"));
-        // This is the MediaSource representing the media to be played.
-        MediaSource audioSource = new ExtractorMediaSource.Factory(dataSourceFactory).createMediaSource(Uri.parse(soundCloudFavoriteTracks.get(position).stream_url + "?client_id=" + SOUNDCLOUD_CLIENT_ID));
-        // Prepare the player with the source.
-        simpleExoPlayer.prepare(audioSource);
+        simpleExoPlayer.seekTo(position, 0);
         simpleExoPlayer.setPlayWhenReady(true);
-        currentTrackViewModel.getCurrentTrack().setValue(selectedTrack);
     }
 
     private void populateTracklist() {
