@@ -79,9 +79,9 @@ public class SpotifyTrackAdapter extends RecyclerView.Adapter<SpotifyTrackAdapte
             view = trackView;
             artwork = trackView.findViewById(R.id.artworkImageView);
             title = trackView.findViewById(R.id.titleTextView);
-            platform = trackView.findViewById(R.id.platformTextView);
-            status = trackView.findViewById(R.id.statusTextView);
-            dateAdded = trackView.findViewById(R.id.dateAddedTextView);
+            platform = trackView.findViewById(R.id.artistTextView);
+            status = trackView.findViewById(R.id.durationTextView);
+            dateAdded = trackView.findViewById(R.id.popularityTextView);
         }
     }
 }

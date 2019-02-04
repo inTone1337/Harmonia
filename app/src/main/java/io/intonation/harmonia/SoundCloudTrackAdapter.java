@@ -13,6 +13,8 @@ import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
+import jp.wasabeef.picasso.transformations.BlurTransformation;
+
 public class SoundCloudTrackAdapter extends RecyclerView.Adapter<SoundCloudTrackAdapter.TrackViewHolder> {
 
     private List<Track> mTrackList;
@@ -33,8 +35,8 @@ public class SoundCloudTrackAdapter extends RecyclerView.Adapter<SoundCloudTrack
     @Override
     public void onBindViewHolder(@NonNull TrackViewHolder holder, final int position) {
         final Track track = mTrackList.get(position);
+        Picasso.get().load(track.artwork_url.replace("large", "t300x300")).transform(new BlurTransformation(holder.view.getContext(), 5)).into(holder.artworkBackground);
         Picasso.get().load(track.artwork_url.replace("large", "t300x300")).into(holder.artwork);
-        //Picasso.get().load(track.artwork_url).into(holder.artwork);
         holder.title.setText(track.title);
         holder.dateAdded.setText(track.favoritings_count);
         holder.status.setText(secondsToMMSS(track.duration));
@@ -69,6 +71,7 @@ public class SoundCloudTrackAdapter extends RecyclerView.Adapter<SoundCloudTrack
     class TrackViewHolder extends RecyclerView.ViewHolder {
 
         private View view;
+        private ImageView artworkBackground;
         private ImageView artwork;
         private TextView title;
         private TextView platform;
@@ -78,11 +81,12 @@ public class SoundCloudTrackAdapter extends RecyclerView.Adapter<SoundCloudTrack
         private TrackViewHolder(View trackView) {
             super(trackView);
             view = trackView;
+            artworkBackground = trackView.findViewById(R.id.artworkBackgroundImageView);
             artwork = trackView.findViewById(R.id.artworkImageView);
             title = trackView.findViewById(R.id.titleTextView);
-            platform = trackView.findViewById(R.id.platformTextView);
-            status = trackView.findViewById(R.id.statusTextView);
-            dateAdded = trackView.findViewById(R.id.dateAddedTextView);
+            platform = trackView.findViewById(R.id.artistTextView);
+            status = trackView.findViewById(R.id.durationTextView);
+            dateAdded = trackView.findViewById(R.id.popularityTextView);
         }
     }
 }

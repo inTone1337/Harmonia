@@ -83,9 +83,9 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
 
         currentTrackArtworkImageView = getView().findViewById(R.id.artworkImageView);
         currentTrackTitleTextView = getView().findViewById(R.id.titleTextView);
-        currentTrackPlatformTextView = getView().findViewById(R.id.platformTextView);
-        currentTrackStatusTextView = getView().findViewById(R.id.statusTextView);
-        currentTrackDateAddedTextView = getView().findViewById(R.id.dateAddedTextView);
+        currentTrackPlatformTextView = getView().findViewById(R.id.artistTextView);
+        currentTrackStatusTextView = getView().findViewById(R.id.durationTextView);
+        currentTrackDateAddedTextView = getView().findViewById(R.id.popularityTextView);
         currentTrackCardView = getView().findViewById(R.id.currentTrackCardView);
         currentTrackCardView.getBackground().setAlpha(128);
 
