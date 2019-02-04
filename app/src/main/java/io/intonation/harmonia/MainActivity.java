@@ -1,4 +1,4 @@
-package com.example.harmonia;
+package io.intonation.harmonia;
 
 import android.content.Intent;
 import android.os.Bundle;

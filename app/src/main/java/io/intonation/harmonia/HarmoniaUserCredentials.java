@@ -1,4 +1,4 @@
-package com.example.harmonia;
+package io.intonation.harmonia;
 
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
@@ -19,7 +19,6 @@ public class HarmoniaUserCredentials implements Parcelable {
             return new HarmoniaUserCredentials[size];
         }
     };
-
     @PrimaryKey(autoGenerate = true)
     private int id;
     @ColumnInfo(name = "soundcloud_user_id")

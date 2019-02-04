@@ -1,4 +1,4 @@
-package com.example.harmonia;
+package io.intonation.harmonia;
 
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -8,19 +8,18 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.jlubecki.soundcloud.webapi.android.models.Track;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
-import kaaes.spotify.webapi.android.models.SavedTrack;
+public class SoundCloudTrackAdapter extends RecyclerView.Adapter<SoundCloudTrackAdapter.TrackViewHolder> {
 
-public class SpotifyTrackAdapter extends RecyclerView.Adapter<SpotifyTrackAdapter.TrackViewHolder> {
-
-    private List<SavedTrack> trackList;
+    private List<Track> mTrackList;
     private OnTrackClickListener onTrackClickListener;
 
-    SpotifyTrackAdapter(List<SavedTrack> trackList, OnTrackClickListener onTrackClickListener) {
-        this.trackList = trackList;
+    SoundCloudTrackAdapter(List<Track> trackList, OnTrackClickListener onTrackClickListener) {
+        mTrackList = trackList;
         this.onTrackClickListener = onTrackClickListener;
     }
 
@@ -33,29 +32,31 @@ public class SpotifyTrackAdapter extends RecyclerView.Adapter<SpotifyTrackAdapte
 
     @Override
     public void onBindViewHolder(@NonNull TrackViewHolder holder, final int position) {
-        final kaaes.spotify.webapi.android.models.Track track = trackList.get(position).track;
-        Picasso.get().load(track.album.images.get(0).url).into(holder.artwork);
-        holder.title.setText(track.name);
-        holder.dateAdded.setText(track.popularity.toString());
-        holder.status.setText(secondsToMMSS(track.duration_ms));
-        holder.platform.setText(track.artists.get(0).name);
+        final Track track = mTrackList.get(position);
+        Picasso.get().load(track.artwork_url.replace("large", "t300x300")).into(holder.artwork);
+        //Picasso.get().load(track.artwork_url).into(holder.artwork);
+        holder.title.setText(track.title);
+        holder.dateAdded.setText(track.favoritings_count);
+        holder.status.setText(secondsToMMSS(track.duration));
+        holder.platform.setText(track.user.username);
         holder.view.setOnClickListener(v -> onTrackClickListener.onTrackClick(position));
     }
 
     //TODO: fix crappy timestamp code
-    private String secondsToMMSS(Long duration) {
-        Long minutes = duration / 60000;
-        Long seconds = (duration - minutes * 60000) / 1000;
+    public String secondsToMMSS(String duration) {
+        int durationAsInt = Integer.parseInt(duration);
+        int minutes = durationAsInt / 60000;
+        int seconds = (durationAsInt - minutes * 60000) / 1000;
         return String.format("%02d", minutes) + ":" + String.format("%02d", seconds);
     }
 
     @Override
     public int getItemCount() {
-        return trackList.size();
+        return mTrackList.size();
     }
 
-    void swapList(List<SavedTrack> newList) {
-        trackList = newList;
+    void swapList(List<Track> newList) {
+        mTrackList = newList;
         if (newList != null) {
             this.notifyDataSetChanged();
         }

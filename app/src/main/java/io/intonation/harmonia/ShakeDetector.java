@@ -1,4 +1,4 @@
-package com.example.harmonia;
+package io.intonation.harmonia;
 
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;

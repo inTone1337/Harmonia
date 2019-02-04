@@ -1,4 +1,4 @@
-package com.example.harmonia;
+package io.intonation.harmonia;
 
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;

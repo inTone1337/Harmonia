@@ -1,4 +1,4 @@
-package com.example.harmonia;
+package io.intonation.harmonia;
 
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Delete;
