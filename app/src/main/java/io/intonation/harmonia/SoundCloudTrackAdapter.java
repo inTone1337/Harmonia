@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import com.jlubecki.soundcloud.webapi.android.models.Track;
@@ -25,9 +24,10 @@ public class SoundCloudTrackAdapter extends RecyclerView.Adapter<SoundCloudTrack
     private OnTrackCheckListener onTrackCheckListener;
     private CompoundButton.OnCheckedChangeListener onCheckedChangeListener;
 
-    SoundCloudTrackAdapter(List<Track> trackList, OnTrackClickListener onTrackClickListener) {
+    SoundCloudTrackAdapter(List<Track> trackList, OnTrackClickListener onTrackClickListener, OnTrackCheckListener onTrackCheckListener) {
         mTrackList = trackList;
         this.onTrackClickListener = onTrackClickListener;
+        this.onTrackCheckListener = onTrackCheckListener;
     }
 
     @NonNull

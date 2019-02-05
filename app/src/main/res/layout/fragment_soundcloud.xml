@@ -7,25 +7,26 @@
     android:layout_height="match_parent"
     tools:context="io.intonation.harmonia.SoundCloudFragment">
 
-    <com.google.android.exoplayer2.ui.PlayerView
-        android:id="@+id/playerView"
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/soundCloudTrackRecyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/soundCloudTrackRecyclerView"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/currentTrackCardView" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:listitem="@layout/item_track" />
 
     <android.support.v7.widget.CardView
         android:id="@+id/currentTrackCardView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:visibility="invisible"
+        android:visibility="visible"
         app:cardBackgroundColor="@android:color/black"
         app:cardCornerRadius="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/playerControlView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintStart_toStartOf="parent">
 
         <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
@@ -97,13 +98,11 @@
 
     </android.support.v7.widget.CardView>
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/soundCloudTrackRecyclerView"
+    <com.google.android.exoplayer2.ui.PlayerControlView
+        android:id="@+id/playerControlView"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/playerView"
-        tools:listitem="@layout/item_track" />
+        app:layout_constraintStart_toStartOf="parent" />
 </android.support.constraint.ConstraintLayout>
