@@ -48,20 +48,28 @@ import retrofit2.Call;
 import retrofit2.Callback;
 
 
-public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapter.OnTrackClickListener {
+public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapter.OnTrackClickListener, SoundCloudTrackAdapter.OnTrackCheckListener {
+    //SoundCloud credentials
     private static final String SOUNDCLOUD_CLIENT_ID = "v4hEbr6QReyb81OAe82kyvhbvzPOES4V";
+    private HarmoniaUserCredentials harmoniaUserCredentials;
+
+    //SoundCloud stuff
     private static SoundCloudTrackAdapter soundCloudTrackAdapter;
     private static List<Track> soundCloudFavoriteTracks;
-    //SoundCloud credentials
-    private HarmoniaUserCredentials harmoniaUserCredentials;
+    private List<Track> playlist;
     private RecyclerView soundCloudTrackRecyclerView;
+
+    //ExoPlayer
     private SimpleExoPlayer simpleExoPlayer;
     private PlayerView playerView;
+
     // The following are used for the shake detection
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
     private ShakeDetector mShakeDetector;
     private Target artworkPlaceholderTarget;
+
+    //Current track stuff
     private MutableLiveData<Track> currentTrack;
     private CurrentTrackViewModel currentTrackViewModel;
     private ImageView currentTrackArtworkImageView;
@@ -239,5 +247,10 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
         if (artworkPlaceholderTarget != null) {
             Picasso.get().cancelRequest(artworkPlaceholderTarget);
         }
+    }
+
+    @Override
+    public void onTrackCheck(int position) {
+        playlist.add(soundCloudFavoriteTracks.get(position));
     }
 }
