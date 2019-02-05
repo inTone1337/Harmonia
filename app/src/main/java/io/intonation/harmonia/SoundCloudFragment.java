@@ -67,8 +67,6 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
     private ImageView currentTrackArtworkImageView;
     private TextView currentTrackTitleTextView;
     private TextView currentTrackPlatformTextView;
-    private TextView currentTrackStatusTextView;
-    private TextView currentTrackDateAddedTextView;
     private CardView currentTrackCardView;
 
     @Override
@@ -84,8 +82,6 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
         currentTrackArtworkImageView = getView().findViewById(R.id.artworkImageView);
         currentTrackTitleTextView = getView().findViewById(R.id.titleTextView);
         currentTrackPlatformTextView = getView().findViewById(R.id.artistTextView);
-        currentTrackStatusTextView = getView().findViewById(R.id.durationTextView);
-        currentTrackDateAddedTextView = getView().findViewById(R.id.popularityTextView);
         currentTrackCardView = getView().findViewById(R.id.currentTrackCardView);
         playerControlView = getView().findViewById(R.id.playerControlView);
         playerControlView.hide();
@@ -112,9 +108,8 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
             Picasso.get().load(track.artwork_url.replace("large", "t300x300"))
                     .into(currentTrackArtworkImageView);
             currentTrackTitleTextView.setText(track.title);
-            currentTrackDateAddedTextView.setText(track.favoritings_count);
-            currentTrackStatusTextView.setText(soundCloudTrackAdapter.secondsToMMSS(track.duration));
             currentTrackPlatformTextView.setText(track.user.username);
+            currentTrackCardView.getBackground().setAlpha(200);
             currentTrackCardView.setVisibility(View.VISIBLE);
         });
     }
