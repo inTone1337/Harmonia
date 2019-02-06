@@ -1,12 +1,17 @@
 package io.intonation.harmonia;
 
+import android.app.PendingIntent;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
@@ -26,6 +31,7 @@ import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.ui.PlayerControlView;
+import com.google.android.exoplayer2.ui.PlayerNotificationManager;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
@@ -36,6 +42,7 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 import retrofit2.Call;
@@ -55,6 +62,7 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
     //ExoPlayer
     private SimpleExoPlayer simpleExoPlayer;
     private PlayerControlView playerControlView;
+    private PlayerNotificationManager playerNotificationManager;
 
     // The following are used for the shake detection
     private SensorManager mSensorManager;
@@ -93,12 +101,7 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
         mAccelerometer = mSensorManager
                 .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mShakeDetector = new ShakeDetector();
-        mShakeDetector.setOnShakeListener(new ShakeDetector.OnShakeListener() {
-            @Override
-            public void onShake(int count) {
-                handleShakeEvent(count);
-            }
-        });
+        mShakeDetector.setOnShakeListener(count -> handleShakeEvent(count));
 
         currentTrackViewModel = ViewModelProviders.of(this).get(CurrentTrackViewModel.class);
         currentTrack = currentTrackViewModel.getCurrentTrack();
@@ -112,6 +115,8 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
             currentTrackCardView.getBackground().setAlpha(200);
             currentTrackCardView.setVisibility(View.VISIBLE);
         });
+
+        playerNotificationManager = PlayerNotificationManager.createWithNotificationChannel(getContext(), "playback", R.string.notification_channel_name_playback_controls, 1337, new MediaDescriptionAdapter());
     }
 
     @Override
@@ -176,6 +181,7 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
                     int newPosition = simpleExoPlayer.getCurrentWindowIndex();
                     playerControlView.show();
                     currentTrackViewModel.getCurrentTrack().setValue(soundCloudFavoriteTracks.get(newPosition));
+                    playerNotificationManager.setPlayer(simpleExoPlayer);
                 }
             });
             // Produces DataSource instances through which media data is loaded.
@@ -216,5 +222,31 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
     @Override
     public void onTrackCheck(int position) {
         playlist.add(soundCloudFavoriteTracks.get(position));
+    }
+
+    public class MediaDescriptionAdapter implements PlayerNotificationManager.MediaDescriptionAdapter {
+
+        @Override
+        public String getCurrentContentTitle(Player player) {
+            return Objects.requireNonNull(currentTrack.getValue()).title;
+        }
+
+        @Nullable
+        @Override
+        public String getCurrentContentText(Player player) {
+            return Objects.requireNonNull(currentTrack.getValue()).user.username;
+        }
+
+        @Nullable
+        @Override
+        public Bitmap getCurrentLargeIcon(Player player, PlayerNotificationManager.BitmapCallback callback) {
+            return ((BitmapDrawable) currentTrackArtworkImageView.getDrawable()).getBitmap();
+        }
+
+        @Nullable
+        @Override
+        public PendingIntent createCurrentContentIntent(Player player) {
+            return PendingIntent.getActivity(getContext(), 1337, new Intent(getContext(), LoginActivity.class), PendingIntent.FLAG_NO_CREATE);
+        }
     }
 }
