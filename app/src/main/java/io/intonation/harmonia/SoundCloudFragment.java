@@ -1,15 +1,17 @@
 package io.intonation.harmonia;
 
+import android.app.Notification;
 import android.app.PendingIntent;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -39,6 +41,7 @@ import com.jlubecki.soundcloud.webapi.android.SoundCloudAPI;
 import com.jlubecki.soundcloud.webapi.android.SoundCloudService;
 import com.jlubecki.soundcloud.webapi.android.models.Track;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +74,7 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
 
     //Current track stuff
     private MutableLiveData<Track> currentTrack;
+    private Bitmap currentTrackArtwork;
     private CurrentTrackViewModel currentTrackViewModel;
     private ImageView currentTrackArtworkImageView;
     private TextView currentTrackTitleTextView;
@@ -117,6 +121,19 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
         });
 
         playerNotificationManager = PlayerNotificationManager.createWithNotificationChannel(getContext(), "playback", R.string.notification_channel_name_playback_controls, 1337, new MediaDescriptionAdapter());
+        playerNotificationManager.setNotificationListener(new PlayerNotificationManager.NotificationListener() {
+            @Override
+            public void onNotificationStarted(int notificationId, Notification notification) {
+                Intent serviceIntent = new Intent(getContext(), SoundCloudPlaybackService.class);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    getActivity().startForegroundService(serviceIntent);
+                }
+            }
+
+            @Override
+            public void onNotificationCancelled(int notificationId) {
+            }
+        });
     }
 
     @Override
@@ -181,6 +198,23 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
                     int newPosition = simpleExoPlayer.getCurrentWindowIndex();
                     playerControlView.show();
                     currentTrackViewModel.getCurrentTrack().setValue(soundCloudFavoriteTracks.get(newPosition));
+                    Target target = new Target() {
+                        @Override
+                        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                            currentTrackArtwork = bitmap;
+                        }
+
+                        @Override
+                        public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+
+                        }
+
+                        @Override
+                        public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+                        }
+                    };
+                    Picasso.get().load(currentTrack.getValue().artwork_url.replace("large", "t300x300")).into(target);
                     playerNotificationManager.setPlayer(simpleExoPlayer);
                 }
             });
@@ -212,10 +246,12 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
+    public void onDestroy() {
+        super.onDestroy();
         if (simpleExoPlayer != null) {
+            playerNotificationManager.setPlayer(null);
             simpleExoPlayer.release();
+            simpleExoPlayer = null;
         }
     }
 
@@ -240,13 +276,13 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
         @Nullable
         @Override
         public Bitmap getCurrentLargeIcon(Player player, PlayerNotificationManager.BitmapCallback callback) {
-            return ((BitmapDrawable) currentTrackArtworkImageView.getDrawable()).getBitmap();
+            return currentTrackArtwork;
         }
 
         @Nullable
         @Override
         public PendingIntent createCurrentContentIntent(Player player) {
-            return PendingIntent.getActivity(getContext(), 1337, new Intent(getContext(), LoginActivity.class), PendingIntent.FLAG_NO_CREATE);
+            return PendingIntent.getActivity(getContext(), 1337, new Intent(getContext(), LoginActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
         }
     }
 }
