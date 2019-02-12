@@ -11,7 +11,7 @@
         android:id="@+id/soundCloudTrackRecyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/currentTrackCardView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -27,7 +27,8 @@
         app:cardElevation="0dp"
         app:layout_constraintBottom_toTopOf="@+id/playerControlView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/soundCloudTrackRecyclerView">
 
         <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
@@ -75,6 +76,16 @@
 
     </android.support.v7.widget.CardView>
 
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/playListRecyclerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/playerControlView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/currentTrackCardView"
+        tools:listitem="@layout/item_track" />
+
     <com.google.android.exoplayer2.ui.PlayerControlView
         android:id="@+id/playerControlView"
         android:layout_width="0dp"
@@ -82,4 +93,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+
 </android.support.constraint.ConstraintLayout>

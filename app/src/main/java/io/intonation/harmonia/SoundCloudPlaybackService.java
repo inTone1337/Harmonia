@@ -13,14 +13,20 @@ public class SoundCloudPlaybackService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String notificaitonId = intent.getStringExtra("notificationId");
+        String notificationId = intent.getStringExtra("notificationId");
         Notification notification = intent.getExtras().getParcelable("notification");
-        startForeground(Integer.parseInt(notificaitonId), notification);
+        startForeground(Integer.parseInt(notificationId), notification);
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stopForeground(false);
     }
 }

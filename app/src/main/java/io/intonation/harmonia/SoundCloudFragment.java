@@ -14,14 +14,20 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
+import android.support.constraint.ConstraintSet;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.transition.AutoTransition;
+import android.transition.TransitionManager;
+import android.transition.TransitionSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -57,10 +63,13 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
     private static final String SOUNDCLOUD_CLIENT_ID = "v4hEbr6QReyb81OAe82kyvhbvzPOES4V";
     //SoundCloud stuff
     private static SoundCloudTrackAdapter soundCloudTrackAdapter;
+    private static SoundCloudTrackAdapter playListAdapter;
     private static List<Track> soundCloudFavoriteTracks;
     private HarmoniaUserCredentials harmoniaUserCredentials;
-    private List<Track> playlist;
+    private List<Track> playList;
     private RecyclerView soundCloudTrackRecyclerView;
+    private RecyclerView playListRecyclerView;
+    private ConstraintLayout soundCloudFragment;
 
     //ExoPlayer
     private SimpleExoPlayer simpleExoPlayer;
@@ -90,12 +99,14 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        soundCloudFragment = getView().findViewById(R.id.soundCloudFragment);
 
         currentTrackArtworkImageView = getView().findViewById(R.id.artworkImageView);
         currentTrackTitleTextView = getView().findViewById(R.id.titleTextView);
         currentTrackPlatformTextView = getView().findViewById(R.id.artistTextView);
         currentTrackCardView = getView().findViewById(R.id.currentTrackCardView);
         playerControlView = getView().findViewById(R.id.playerControlView);
+        //playerControlView.setShowShuffleButton(true);
         playerControlView.hide();
 
         getSoundCloudFavorites(harmoniaUserCredentials.getSoundCloudUserId());
@@ -116,8 +127,23 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
                     .into(currentTrackArtworkImageView);
             currentTrackTitleTextView.setText(track.title);
             currentTrackPlatformTextView.setText(track.user.username);
-            currentTrackCardView.getBackground().setAlpha(200);
+            currentTrackCardView.getBackground().setAlpha(204);
             currentTrackCardView.setVisibility(View.VISIBLE);
+            currentTrackCardView.setOnClickListener(v -> {
+                //soundCloudTrackRecyclerView.setVisibility(View.GONE);
+                ConstraintSet constraintSet = new ConstraintSet();
+                constraintSet.clone(soundCloudFragment);
+                constraintSet.clear(R.id.soundCloudTrackRecyclerView, ConstraintSet.TOP);
+                constraintSet.clear(R.id.currentTrackCardView, ConstraintSet.BOTTOM);
+
+                AutoTransition transition = new AutoTransition();
+                transition.setOrdering(TransitionSet.ORDERING_TOGETHER);
+                transition.setDuration(250);
+                transition.setInterpolator(new AccelerateInterpolator());
+
+                TransitionManager.beginDelayedTransition(soundCloudFragment, transition);
+                constraintSet.applyTo(soundCloudFragment);
+            });
         });
 
         playerNotificationManager = PlayerNotificationManager.createWithNotificationChannel(getContext(), "playback", R.string.notification_channel_name_playback_controls, 1337, new MediaDescriptionAdapter());
@@ -125,8 +151,10 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
             @Override
             public void onNotificationStarted(int notificationId, Notification notification) {
                 Intent serviceIntent = new Intent(getContext(), SoundCloudPlaybackService.class);
+                serviceIntent.putExtra("notificationId", notificationId);
+                serviceIntent.putExtra("notification", notification);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    getActivity().startForegroundService(serviceIntent);
+                    getActivity().startService(serviceIntent);
                 }
             }
 
@@ -171,7 +199,7 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
                 if (userFavorites != null) {
                     Log.d("SC", "Track success: " + userFavorites.get(0).stream_url);
                     soundCloudFavoriteTracks = userFavorites;
-                    populateTracklist();
+                    populateTrackList();
 
                 } else {
                     Log.e("SC", "Error in response.");
@@ -184,7 +212,7 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
             }
         });
 
-        playlist = new ArrayList<>();
+        playList = new ArrayList<>();
     }
 
     private void playSoundCloud(int position) {
@@ -224,20 +252,30 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
             ConcatenatingMediaSource exoPlayerPlaylist = new ConcatenatingMediaSource();
             for (Track track : soundCloudFavoriteTracks) {
                 exoPlayerPlaylist.addMediaSource(new ExtractorMediaSource.Factory(dataSourceFactory).createMediaSource(Uri.parse(track.stream_url + "?client_id=" + SOUNDCLOUD_CLIENT_ID)));
+                playList.add(track);
             }
             // Prepare the player with the source.
             simpleExoPlayer.prepare(exoPlayerPlaylist);
+            populatePlayList();
         }
         simpleExoPlayer.seekTo(position, 0);
         simpleExoPlayer.setPlayWhenReady(true);
     }
 
-    private void populateTracklist() {
+    private void populateTrackList() {
         soundCloudTrackRecyclerView = getView().findViewById(R.id.soundCloudTrackRecyclerView);
         soundCloudTrackAdapter = new SoundCloudTrackAdapter(soundCloudFavoriteTracks, this, this);
 
         soundCloudTrackRecyclerView.setAdapter(soundCloudTrackAdapter);
         soundCloudTrackRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
+    }
+
+    private void populatePlayList() {
+        playListRecyclerView = getView().findViewById(R.id.playListRecyclerView);
+        playListAdapter = new SoundCloudTrackAdapter(playList, this, this);
+
+        playListRecyclerView.setAdapter(playListAdapter);
+        playListRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
     }
 
     @Override
@@ -249,6 +287,8 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
     public void onDestroy() {
         super.onDestroy();
         if (simpleExoPlayer != null) {
+            Intent serviceIntent = new Intent(getContext(), SoundCloudPlaybackService.class);
+            getActivity().stopService(serviceIntent);
             playerNotificationManager.setPlayer(null);
             simpleExoPlayer.release();
             simpleExoPlayer = null;
@@ -257,7 +297,7 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
 
     @Override
     public void onTrackCheck(int position) {
-        playlist.add(soundCloudFavoriteTracks.get(position));
+        playList.add(soundCloudFavoriteTracks.get(position));
     }
 
     public class MediaDescriptionAdapter implements PlayerNotificationManager.MediaDescriptionAdapter {
