@@ -125,7 +125,7 @@ public class SpotifyFragment extends Fragment implements SpotifyTrackAdapter.OnT
 
     @Override
     public void onTrackClick(int position) {
-        mSpotifyAppRemote.getPlayerApi().play(spotifyFavoriteTracks.get(0).track.uri);
+        mSpotifyAppRemote.getPlayerApi().play(spotifyFavoriteTracks.get(position).track.uri);
     }
 
     @Override

@@ -57,6 +57,8 @@ import java.util.Random;
 import retrofit2.Call;
 import retrofit2.Callback;
 
+import static com.google.android.exoplayer2.Player.DISCONTINUITY_REASON_PERIOD_TRANSITION;
+
 
 public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapter.OnTrackClickListener, SoundCloudTrackAdapter.OnTrackCheckListener {
     //SoundCloud credentials
@@ -223,6 +225,17 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
             simpleExoPlayer.addListener(new Player.EventListener() {
                 @Override
                 public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+                    updateCurrentTrack();
+                }
+
+                @Override
+                public void onPositionDiscontinuity(int reason) {
+                    if (reason == DISCONTINUITY_REASON_PERIOD_TRANSITION) {
+                        updateCurrentTrack();
+                    }
+                }
+
+                private void updateCurrentTrack() {
                     int newPosition = simpleExoPlayer.getCurrentWindowIndex();
                     playerControlView.show();
                     currentTrackViewModel.getCurrentTrack().setValue(soundCloudFavoriteTracks.get(newPosition));
