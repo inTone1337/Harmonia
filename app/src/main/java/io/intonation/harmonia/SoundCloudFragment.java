@@ -60,7 +60,7 @@ import retrofit2.Callback;
 import static com.google.android.exoplayer2.Player.DISCONTINUITY_REASON_PERIOD_TRANSITION;
 
 
-public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapter.OnTrackClickListener, SoundCloudTrackAdapter.OnTrackCheckListener {
+public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapter.OnTrackClickListener {
     //SoundCloud credentials
     private static final String SOUNDCLOUD_CLIENT_ID = "v4hEbr6QReyb81OAe82kyvhbvzPOES4V";
     //SoundCloud stuff
@@ -72,6 +72,8 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
     private RecyclerView soundCloudTrackRecyclerView;
     private RecyclerView playListRecyclerView;
     private ConstraintLayout soundCloudFragment;
+    private int position;
+    private boolean playlistOpen = false;
 
     //ExoPlayer
     private SimpleExoPlayer simpleExoPlayer;
@@ -132,19 +134,34 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
             currentTrackCardView.getBackground().setAlpha(204);
             currentTrackCardView.setVisibility(View.VISIBLE);
             currentTrackCardView.setOnClickListener(v -> {
-                //soundCloudTrackRecyclerView.setVisibility(View.GONE);
-                ConstraintSet constraintSet = new ConstraintSet();
-                constraintSet.clone(soundCloudFragment);
-                constraintSet.clear(R.id.soundCloudTrackRecyclerView, ConstraintSet.TOP);
-                constraintSet.clear(R.id.currentTrackCardView, ConstraintSet.BOTTOM);
+                ConstraintSet originalConstraintSet = new ConstraintSet();
+                originalConstraintSet.clone(soundCloudFragment);
+                if (!playlistOpen) {
+                    //soundCloudTrackRecyclerView.setVisibility(View.GONE);
+                    ConstraintSet constraintSet = new ConstraintSet();
+                    constraintSet.clone(soundCloudFragment);
+                    constraintSet.clear(R.id.soundCloudTrackRecyclerView, ConstraintSet.TOP);
+                    constraintSet.clear(R.id.currentTrackCardView, ConstraintSet.BOTTOM);
 
-                AutoTransition transition = new AutoTransition();
-                transition.setOrdering(TransitionSet.ORDERING_TOGETHER);
-                transition.setDuration(250);
-                transition.setInterpolator(new AccelerateInterpolator());
+                    AutoTransition transition = new AutoTransition();
+                    transition.setOrdering(TransitionSet.ORDERING_TOGETHER);
+                    transition.setDuration(250);
+                    transition.setInterpolator(new AccelerateInterpolator());
 
-                TransitionManager.beginDelayedTransition(soundCloudFragment, transition);
-                constraintSet.applyTo(soundCloudFragment);
+                    TransitionManager.beginDelayedTransition(soundCloudFragment, transition);
+                    constraintSet.applyTo(soundCloudFragment);
+                    playListRecyclerView.scrollToPosition(position);
+                    playlistOpen = true;
+                } else if (playlistOpen) {
+                    AutoTransition transition = new AutoTransition();
+                    transition.setOrdering(TransitionSet.ORDERING_TOGETHER);
+                    transition.setDuration(250);
+                    transition.setInterpolator(new AccelerateInterpolator());
+
+                    TransitionManager.beginDelayedTransition(soundCloudFragment, transition);
+                    originalConstraintSet.applyTo(soundCloudFragment);
+                    playlistOpen = false;
+                }
             });
         });
 
@@ -217,6 +234,10 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
         playList = new ArrayList<>();
     }
 
+    public void setPosition(int position) {
+        this.position = position;
+    }
+
     private void playSoundCloud(int position) {
         if (simpleExoPlayer == null) {
             simpleExoPlayer = ExoPlayerFactory.newSimpleInstance(getContext());
@@ -257,6 +278,7 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
                     };
                     Picasso.get().load(currentTrack.getValue().artwork_url.replace("large", "t300x300")).into(target);
                     playerNotificationManager.setPlayer(simpleExoPlayer);
+                    setPosition(position);
                 }
             });
             // Produces DataSource instances through which media data is loaded.
@@ -277,7 +299,7 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
 
     private void populateTrackList() {
         soundCloudTrackRecyclerView = getView().findViewById(R.id.soundCloudTrackRecyclerView);
-        soundCloudTrackAdapter = new SoundCloudTrackAdapter(soundCloudFavoriteTracks, this, this);
+        soundCloudTrackAdapter = new SoundCloudTrackAdapter(soundCloudFavoriteTracks, this);
 
         soundCloudTrackRecyclerView.setAdapter(soundCloudTrackAdapter);
         soundCloudTrackRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
@@ -285,7 +307,7 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
 
     private void populatePlayList() {
         playListRecyclerView = getView().findViewById(R.id.playListRecyclerView);
-        playListAdapter = new SoundCloudTrackAdapter(playList, this, this);
+        playListAdapter = new SoundCloudTrackAdapter(playList, this);
 
         playListRecyclerView.setAdapter(playListAdapter);
         playListRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
@@ -306,11 +328,6 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
             simpleExoPlayer.release();
             simpleExoPlayer = null;
         }
-    }
-
-    @Override
-    public void onTrackCheck(int position) {
-        playList.add(soundCloudFavoriteTracks.get(position));
     }
 
     public class MediaDescriptionAdapter implements PlayerNotificationManager.MediaDescriptionAdapter {

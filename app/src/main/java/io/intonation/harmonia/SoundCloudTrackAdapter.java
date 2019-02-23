@@ -5,8 +5,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -21,13 +19,10 @@ public class SoundCloudTrackAdapter extends RecyclerView.Adapter<SoundCloudTrack
 
     private List<Track> mTrackList;
     private OnTrackClickListener onTrackClickListener;
-    private OnTrackCheckListener onTrackCheckListener;
-    private CompoundButton.OnCheckedChangeListener onCheckedChangeListener;
 
-    SoundCloudTrackAdapter(List<Track> trackList, OnTrackClickListener onTrackClickListener, OnTrackCheckListener onTrackCheckListener) {
+    SoundCloudTrackAdapter(List<Track> trackList, OnTrackClickListener onTrackClickListener) {
         mTrackList = trackList;
         this.onTrackClickListener = onTrackClickListener;
-        this.onTrackCheckListener = onTrackCheckListener;
     }
 
     @NonNull
@@ -41,7 +36,6 @@ public class SoundCloudTrackAdapter extends RecyclerView.Adapter<SoundCloudTrack
     public void onBindViewHolder(@NonNull TrackViewHolder holder, final int position) {
         final Track track = mTrackList.get(position);
         Picasso.get().load(track.artwork_url.replace("large", "t300x300")).transform(new BlurTransformation(holder.view.getContext(), 5)).into(holder.artworkBackground);
-        holder.selected.setOnClickListener(v -> onTrackCheckListener.onTrackCheck(position));
         Picasso.get().load(track.artwork_url.replace("large", "t300x300")).into(holder.artwork);
         holder.title.setText(track.title);
         holder.dateAdded.setText(track.favoritings_count);
@@ -74,15 +68,10 @@ public class SoundCloudTrackAdapter extends RecyclerView.Adapter<SoundCloudTrack
         void onTrackClick(int position);
     }
 
-    public interface OnTrackCheckListener {
-        void onTrackCheck(int position);
-    }
-
     class TrackViewHolder extends RecyclerView.ViewHolder {
 
         private View view;
         private ImageView artworkBackground;
-        private CheckBox selected;
         private ImageView artwork;
         private TextView title;
         private TextView platform;
@@ -93,7 +82,6 @@ public class SoundCloudTrackAdapter extends RecyclerView.Adapter<SoundCloudTrack
             super(trackView);
             view = trackView;
             artworkBackground = trackView.findViewById(R.id.artworkBackgroundImageView);
-            selected = trackView.findViewById(R.id.selectedCheckBox);
             artwork = trackView.findViewById(R.id.artworkImageView);
             title = trackView.findViewById(R.id.titleTextView);
             platform = trackView.findViewById(R.id.artistTextView);

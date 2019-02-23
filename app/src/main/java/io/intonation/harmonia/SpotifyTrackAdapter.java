@@ -12,7 +12,9 @@ import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
+import jp.wasabeef.picasso.transformations.BlurTransformation;
 import kaaes.spotify.webapi.android.models.SavedTrack;
+import kaaes.spotify.webapi.android.models.Track;
 
 public class SpotifyTrackAdapter extends RecyclerView.Adapter<SpotifyTrackAdapter.TrackViewHolder> {
 
@@ -33,7 +35,8 @@ public class SpotifyTrackAdapter extends RecyclerView.Adapter<SpotifyTrackAdapte
 
     @Override
     public void onBindViewHolder(@NonNull TrackViewHolder holder, final int position) {
-        final kaaes.spotify.webapi.android.models.Track track = trackList.get(position).track;
+        final Track track = trackList.get(position).track;
+        Picasso.get().load(track.album.images.get(0).url).transform(new BlurTransformation(holder.view.getContext(), 5)).into(holder.artworkBackground);
         Picasso.get().load(track.album.images.get(0).url).into(holder.artwork);
         holder.title.setText(track.name);
         holder.dateAdded.setText(track.popularity.toString());
@@ -68,6 +71,7 @@ public class SpotifyTrackAdapter extends RecyclerView.Adapter<SpotifyTrackAdapte
     class TrackViewHolder extends RecyclerView.ViewHolder {
 
         private View view;
+        private ImageView artworkBackground;
         private ImageView artwork;
         private TextView title;
         private TextView platform;
@@ -77,6 +81,7 @@ public class SpotifyTrackAdapter extends RecyclerView.Adapter<SpotifyTrackAdapte
         private TrackViewHolder(View trackView) {
             super(trackView);
             view = trackView;
+            artworkBackground = trackView.findViewById(R.id.artworkBackgroundImageView);
             artwork = trackView.findViewById(R.id.artworkImageView);
             title = trackView.findViewById(R.id.titleTextView);
             platform = trackView.findViewById(R.id.artistTextView);
