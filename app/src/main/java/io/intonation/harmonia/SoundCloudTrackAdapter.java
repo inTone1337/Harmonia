@@ -35,8 +35,10 @@ public class SoundCloudTrackAdapter extends RecyclerView.Adapter<SoundCloudTrack
     @Override
     public void onBindViewHolder(@NonNull TrackViewHolder holder, final int position) {
         final Track track = mTrackList.get(position);
-        Picasso.get().load(track.artwork_url.replace("large", "t300x300")).transform(new BlurTransformation(holder.view.getContext(), 5)).into(holder.artworkBackground);
-        Picasso.get().load(track.artwork_url.replace("large", "t300x300")).into(holder.artwork);
+        if (track.artwork_url != null) {
+            Picasso.get().load(track.artwork_url.replace("large", "t300x300")).transform(new BlurTransformation(holder.view.getContext(), 5)).into(holder.artworkBackground);
+            Picasso.get().load(track.artwork_url.replace("large", "t300x300")).into(holder.artwork);
+        }
         holder.title.setText(track.title);
         holder.dateAdded.setText(track.favoritings_count);
         holder.status.setText(secondsToMMSS(track.duration));

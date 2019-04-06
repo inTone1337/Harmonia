@@ -58,6 +58,8 @@ import retrofit2.Call;
 import retrofit2.Callback;
 
 import static com.google.android.exoplayer2.Player.DISCONTINUITY_REASON_PERIOD_TRANSITION;
+import static com.google.android.exoplayer2.util.RepeatModeUtil.REPEAT_TOGGLE_MODE_ALL;
+import static com.google.android.exoplayer2.util.RepeatModeUtil.REPEAT_TOGGLE_MODE_ONE;
 
 
 public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapter.OnTrackClickListener {
@@ -110,7 +112,8 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
         currentTrackPlatformTextView = getView().findViewById(R.id.artistTextView);
         currentTrackCardView = getView().findViewById(R.id.currentTrackCardView);
         playerControlView = getView().findViewById(R.id.playerControlView);
-        //playerControlView.setShowShuffleButton(true);
+        playerControlView.setShowShuffleButton(true);
+        playerControlView.setRepeatToggleModes(REPEAT_TOGGLE_MODE_ONE | REPEAT_TOGGLE_MODE_ALL);
         playerControlView.hide();
 
         getSoundCloudFavorites(harmoniaUserCredentials.getSoundCloudUserId());
@@ -134,32 +137,30 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
             currentTrackCardView.getBackground().setAlpha(204);
             currentTrackCardView.setVisibility(View.VISIBLE);
             currentTrackCardView.setOnClickListener(v -> {
-                ConstraintSet originalConstraintSet = new ConstraintSet();
-                originalConstraintSet.clone(soundCloudFragment);
+                ConstraintSet constraintSet = new ConstraintSet();
+                constraintSet.clone(soundCloudFragment);
+
+                AutoTransition transition = new AutoTransition();
+                transition.setOrdering(TransitionSet.ORDERING_TOGETHER);
+                transition.setDuration(250);
+                transition.setInterpolator(new AccelerateInterpolator());
                 if (!playlistOpen) {
-                    //soundCloudTrackRecyclerView.setVisibility(View.GONE);
-                    ConstraintSet constraintSet = new ConstraintSet();
-                    constraintSet.clone(soundCloudFragment);
                     constraintSet.clear(R.id.soundCloudTrackRecyclerView, ConstraintSet.TOP);
                     constraintSet.clear(R.id.currentTrackCardView, ConstraintSet.BOTTOM);
 
-                    AutoTransition transition = new AutoTransition();
-                    transition.setOrdering(TransitionSet.ORDERING_TOGETHER);
-                    transition.setDuration(250);
-                    transition.setInterpolator(new AccelerateInterpolator());
+                    TransitionManager.beginDelayedTransition(soundCloudFragment, transition);
+                    constraintSet.applyTo(soundCloudFragment);
+                    //TODO: get this scrolltoposition to show the current track at top
+                    playListRecyclerView.scrollToPosition(position);
+
+                    playlistOpen = true;
+                } else {
+                    constraintSet.connect(R.id.soundCloudTrackRecyclerView, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+                    constraintSet.connect(R.id.currentTrackCardView, ConstraintSet.BOTTOM, R.id.playerControlView, ConstraintSet.TOP);
 
                     TransitionManager.beginDelayedTransition(soundCloudFragment, transition);
                     constraintSet.applyTo(soundCloudFragment);
-                    playListRecyclerView.scrollToPosition(position);
-                    playlistOpen = true;
-                } else if (playlistOpen) {
-                    AutoTransition transition = new AutoTransition();
-                    transition.setOrdering(TransitionSet.ORDERING_TOGETHER);
-                    transition.setDuration(250);
-                    transition.setInterpolator(new AccelerateInterpolator());
 
-                    TransitionManager.beginDelayedTransition(soundCloudFragment, transition);
-                    originalConstraintSet.applyTo(soundCloudFragment);
                     playlistOpen = false;
                 }
             });
@@ -278,7 +279,8 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
                     };
                     Picasso.get().load(currentTrack.getValue().artwork_url.replace("large", "t300x300")).into(target);
                     playerNotificationManager.setPlayer(simpleExoPlayer);
-                    setPosition(position);
+                    setPosition(newPosition);
+                    playListRecyclerView.scrollToPosition(position);
                 }
             });
             // Produces DataSource instances through which media data is loaded.
