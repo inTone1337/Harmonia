@@ -49,7 +49,6 @@ import com.jlubecki.soundcloud.webapi.android.models.Track;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
@@ -219,8 +218,8 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
                 if (userFavorites != null) {
                     Log.d("SC", "Track success: " + userFavorites.get(0).stream_url);
                     soundCloudFavoriteTracks = userFavorites;
+                    playList = soundCloudFavoriteTracks;
                     populateTrackList();
-
                 } else {
                     Log.e("SC", "Error in response.");
                 }
@@ -231,8 +230,6 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
                 Log.e("SC", "Error getting track.", t);
             }
         });
-
-        playList = new ArrayList<>();
     }
 
     public void setPosition(int position) {
@@ -245,6 +242,11 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
             playerControlView.setPlayer(simpleExoPlayer);
             playerControlView.setShowTimeoutMs(0);
             simpleExoPlayer.addListener(new Player.EventListener() {
+                @Override
+                public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
+
+                }
+
                 @Override
                 public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
                     updateCurrentTrack();
@@ -259,6 +261,9 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
 
                 private void updateCurrentTrack() {
                     int newPosition = simpleExoPlayer.getCurrentWindowIndex();
+                    //TODO: update the playlist when shuffled etc.
+                    //https://github.com/google/ExoPlayer/issues/4255
+                    System.out.println(soundCloudFavoriteTracks.get(simpleExoPlayer.getCurrentTimeline().getFirstWindowIndex(simpleExoPlayer.getShuffleModeEnabled())).title);
                     playerControlView.show();
                     currentTrackViewModel.getCurrentTrack().setValue(soundCloudFavoriteTracks.get(newPosition));
                     Target target = new Target() {
@@ -284,12 +289,11 @@ public class SoundCloudFragment extends Fragment implements SoundCloudTrackAdapt
                 }
             });
             // Produces DataSource instances through which media data is loaded.
-            DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(getContext(), Util.getUserAgent(getContext(), "Harmonia"));
+            DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(getContext(), Util.getUserAgent(getContext(), "io.intonation.harmonia"));
             // This is the MediaSource representing the media to be played.
             ConcatenatingMediaSource exoPlayerPlaylist = new ConcatenatingMediaSource();
             for (Track track : soundCloudFavoriteTracks) {
                 exoPlayerPlaylist.addMediaSource(new ExtractorMediaSource.Factory(dataSourceFactory).createMediaSource(Uri.parse(track.stream_url + "?client_id=" + SOUNDCLOUD_CLIENT_ID)));
-                playList.add(track);
             }
             // Prepare the player with the source.
             simpleExoPlayer.prepare(exoPlayerPlaylist);
